@@ -16,7 +16,7 @@ import { removeEntry } from './Methods/Delete.js';
 
 let client, db, eventsCollection, meetingsCollection, tasksCollection;
 
-const DB_CLUSTER_HOST = "mongodb+srv://guilherme_sumita:senha123@cluster0.u931lmp.mongodb.net/?appName=Cluster0";//preencha com sua conection string do MongoDB Atlas;
+const DB_CLUSTER_HOST = "";//preencha com sua conection string do MongoDB Atlas;
 const dataBaseName = "calendarDB";
 const eventsCollectionName = "events";
 const meetingsCollectionName = "meetings";
