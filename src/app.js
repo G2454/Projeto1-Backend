@@ -1,12 +1,13 @@
 import express from 'express';
 import session from 'express-session';
 import { setupSwagger } from './shared/config/swagger.js';
-import { getEventRoutes } from './API/Controllers/eventRoutes.js';
-import { getMeetingRoutes } from './API/Controllers/meetingRoutes.js';
-import { getTaskRoutes } from './API/Controllers/taskRoutes.js';
-import { getUserRoutes } from './API/Controllers/userRoutes.js';
 
-export function buildApp(dbCollections) {
+/**
+ * Monta o app Express a partir de um container já resolvido (routers prontos).
+ * Toda a fiação de dependências acontece no composition root (composition/container.js);
+ * aqui tratamos apenas de configuração HTTP e montagem das rotas.
+ */
+export function buildApp(container) {
     const app = express();
 
     // Middlewares globais
@@ -16,7 +17,7 @@ export function buildApp(dbCollections) {
         secret: "aslkdjaldj2394u12038sfaoj",
         resave: false,
         saveUninitialized: false,
-        cookie: { 
+        cookie: {
             secure: false,
             maxAge: 1000 * 60 * 60 * 24
         }
@@ -26,10 +27,10 @@ export function buildApp(dbCollections) {
     setupSwagger(app);
 
     // Rotas
-    app.use('/api/users', getUserRoutes(dbCollections.usersCollection));
-    app.use('/api/events', getEventRoutes(dbCollections.eventsCollection));
-    app.use('/api/meetings', getMeetingRoutes(dbCollections.meetingsCollection));
-    app.use('/api/tasks', getTaskRoutes(dbCollections.tasksCollection));
+    app.use('/api/users', container.userRouter);
+    app.use('/api/events', container.eventRouter);
+    app.use('/api/meetings', container.meetingRouter);
+    app.use('/api/tasks', container.taskRouter);
 
     // Health check
     app.get('/health', (req, res) => {

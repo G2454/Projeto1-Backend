@@ -1,60 +1,27 @@
-import mongodb from 'mongodb';
 import { setServers } from 'node:dns';
+import { connectToDatabase } from './src/Infrastructure/Database/mongoClient.js';
+import { buildContainer } from './src/composition/container.js';
 import { buildApp } from './src/app.js';
 
 // Configuração DNS
 setServers(["1.1.1.1", "8.8.8.8"]);
 
-const { MongoClient } = mongodb;
-const DB_CLUSTER_HOST = "";
-const dataBaseName = "calendarDB";
+const MONGO_URI = process.env.MONGO_URI || "";
 const PORT = process.env.PORT || 3000;
-
-async function initializeDatabase(client) {
-    try {
-        const db = client.db(dataBaseName);
-        
-        // Criar collections se não existirem
-        const eventsCollection = await db.createCollection("events").catch(() => db.collection("events"));
-        const meetingsCollection = await db.createCollection("meetings").catch(() => db.collection("meetings"));
-        const tasksCollection = await db.createCollection("tasks").catch(() => db.collection("tasks"));
-        const usersCollection = await db.createCollection("users").catch(() => db.collection("users"));
-
-        console.log("Database initialized successfully");
-        
-        return {
-            db,
-            eventsCollection,
-            meetingsCollection,
-            tasksCollection,
-            usersCollection
-        };
-    } catch (error) {
-        console.error('Error initializing database', error);
-        throw error;
-    }
-}
 
 async function main() {
     let client;
-    
-    try {
-        // Conectar ao MongoDB
-        client = new MongoClient(DB_CLUSTER_HOST);
-        await client.connect();
-        console.log("Connected to MongoDB");
 
-        // Inicializar banco e collections
-        const { db, eventsCollection, meetingsCollection, tasksCollection, usersCollection } = 
-            await initializeDatabase(client);
+    try {
+        // Conectar ao MongoDB e inicializar as collections (Infrastructure)
+        const connection = await connectToDatabase(MONGO_URI);
+        client = connection.client;
+
+        // Composition root: conecta repositórios -> services -> controllers -> routers
+        const container = buildContainer(connection.collections);
 
         // Construir app Express
-        const app = buildApp({
-            eventsCollection,
-            meetingsCollection,
-            tasksCollection,
-            usersCollection
-        });
+        const app = buildApp(container);
 
         // Iniciar servidor
         app.listen(PORT, () => {
@@ -68,7 +35,5 @@ async function main() {
         process.exit(1);
     }
 }
-
-main();
 
 main();
